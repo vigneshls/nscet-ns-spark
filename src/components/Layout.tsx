@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { COLLEGE_SHORT, ROLE_LABEL } from '../lib/constants';
+import { liveAvailable, switchMode } from '../lib/store';
 import type { Role } from '../lib/types';
 
 const NAV: { to: string; label: string; roles: Role[] }[] = [
@@ -76,7 +77,10 @@ export default function Layout() {
         </header>
         {mode === 'demo' && (
           <div className="no-print border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-center text-xs text-amber-900">
-            Demo mode — data is stored only in this browser. Connect Supabase (see README) for real multi-user use.
+            Demo mode — sample data with placeholder names, stored only in this browser.
+            {liveAvailable && (
+              <button className="ml-2 font-semibold underline" onClick={() => switchMode('live')}>Exit demo</button>
+            )}
           </div>
         )}
         <main className="mx-auto max-w-7xl p-4 sm:p-6">

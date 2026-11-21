@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { ErrorBox } from '../components/ui';
 import { COLLEGE, MANAGEMENT, ROLE_LABEL } from '../lib/constants';
-import { store } from '../lib/store';
+import { liveAvailable, store, switchMode } from '../lib/store';
 import type { Profile } from '../lib/types';
 
 export default function Login() {
@@ -56,6 +56,11 @@ function DemoLogin() {
             </button>
           ))}
       </div>
+      {liveAvailable && (
+        <button className="mt-4 text-sm font-semibold text-brand-700 hover:underline" onClick={() => switchMode('live')}>
+          ← Back to the real NS Spark sign-in
+        </button>
+      )}
       <div className="mt-5 flex gap-2">
         <select className="input" value={other} onChange={(e) => setOther(e.target.value)} aria-label="Any demo user">
           <option value="">…or any other demo user</option>
@@ -122,6 +127,11 @@ function RealLogin() {
       <button type="button" className="w-full text-sm font-semibold text-brand-700 hover:underline" onClick={() => setMode(mode === 'in' ? 'up' : 'in')}>
         {mode === 'in' ? 'New here? Create an account' : 'Have an account? Sign in'}
       </button>
+      <div className="border-t border-slate-200 pt-4 text-center">
+        <button type="button" className="btn-ghost w-full" onClick={() => switchMode('demo')}>
+          Try the demo (no login, sample data)
+        </button>
+      </div>
     </form>
   );
 }

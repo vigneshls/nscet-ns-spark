@@ -2,6 +2,8 @@
 
 **Live app:** https://vigneshls.github.io/nscet-ns-spark/ (connected to the Supabase project *TMHNU's NS Spark*, Mumbai). `npm run dev` still runs the offline demo.
 
+**Demo link (no login, sample data, nothing touches the database):** https://vigneshls.github.io/nscet-ns-spark/?demo
+
 NS Spark is the single umbrella for innovation projects across the seven departments of Nadar Saraswathi College of Engineering and Technology. It works like this:
 
 1. HoDs propose projects.
