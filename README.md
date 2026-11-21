@@ -1,6 +1,6 @@
 # NS Spark — NSCET Innovation Project Tracker
 
-**Live demo:** https://vigneshls.github.io/nscet-ns-spark/ (demo mode: data is stored only in your browser)
+**Live app:** https://vigneshls.github.io/nscet-ns-spark/ (connected to the Supabase project *TMHNU's NS Spark*, Mumbai). `npm run dev` still runs the offline demo.
 
 NS Spark is the single umbrella for innovation projects across the seven departments of Nadar Saraswathi College of Engineering and Technology. It works like this:
 
