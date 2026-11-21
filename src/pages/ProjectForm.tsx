@@ -34,6 +34,8 @@ export default function ProjectForm() {
   const [techText, setTechText] = useState(d.tech_stack.join(', '));
   const [team, setTeam] = useState<MemberDraft[]>([{ user_id: null, name: '', reg_no: null, member_role: 'Faculty Lead', workstream: null }]);
   const [tasks, setTasks] = useState<TaskDraft[]>([]);
+  const [wsName, setWsName] = useState('');
+  const [wsCount, setWsCount] = useState(5);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -193,17 +195,26 @@ export default function ProjectForm() {
           </section>
 
           <section className="card mt-4 p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-semibold">3 · Planned tasks / milestones</h2>
-              <button className="btn-ghost" onClick={() => setTasks((t) => [...t, { code: `T${t.length + 1}`, title: '', workstream: null, planned_start: null, planned_end: null }])}>+ Task</button>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-semibold">3 · Workstreams &amp; tasks</h2>
+              <div className="flex flex-wrap gap-2">
+                <input className="input w-44" placeholder="Workstream, e.g. Hardware" value={wsName} onChange={(e) => setWsName(e.target.value)} aria-label="Workstream name" />
+                <input className="input w-20" type="number" min={1} max={30} value={wsCount} onChange={(e) => setWsCount(Number(e.target.value))} aria-label="Number of tasks" />
+                <button className="btn-ghost" disabled={!wsName.trim()} onClick={() => { setTasks((t) => addWorkstream(t, wsName.trim(), wsCount)); setWsName(''); }}>+ Workstream</button>
+                <button className="btn-ghost" onClick={() => setTasks((t) => [...t, { code: nextCode(t, null), title: '', workstream: null, planned_start: null, planned_end: null }])}>+ Task</button>
+              </div>
             </div>
-            <p className="mb-3 text-xs text-slate-500">Optional now — tasks can be added later. Use workstreams (e.g. Fabrication, PLC, Interface) for multi-team projects; progress is the average of task completion.</p>
+            <p className="mb-3 text-xs text-slate-500">
+              Large projects can be split into workstreams (teams), each with its own numbered tasks — e.g. a <b>Hardware</b> workstream gets H1, H2, H3…; a <b>Software</b> workstream S1, S2… Each team member is assigned to a workstream and logs time against its tasks. Progress is the average task completion. Optional now — tasks can be added later.
+            </p>
+            <datalist id="ws-list">{[...new Set(tasks.map((t) => t.workstream).filter(Boolean))].map((w) => <option key={w} value={w!} />)}</datalist>
+            {tasks.length === 0 && <div className="rounded-xl border border-dashed border-slate-300 p-4 text-center text-sm text-slate-500">No tasks yet.</div>}
             <div className="space-y-2">
               {tasks.map((t, i) => (
                 <div key={i} className="grid gap-2 sm:grid-cols-[70px_1fr_150px_140px_140px_40px]">
                   <input className="input" value={t.code} aria-label="Task code" onChange={(e) => setTasks((x) => x.map((y, j) => (j === i ? { ...y, code: e.target.value } : y)))} />
-                  <input className="input" placeholder="Task" value={t.title} aria-label="Task title" onChange={(e) => setTasks((x) => x.map((y, j) => (j === i ? { ...y, title: e.target.value } : y)))} />
-                  <input className="input" placeholder="Workstream" value={t.workstream ?? ''} aria-label="Task workstream" onChange={(e) => setTasks((x) => x.map((y, j) => (j === i ? { ...y, workstream: e.target.value || null } : y)))} />
+                  <input className="input" placeholder="Task (rows left blank are skipped)" value={t.title} aria-label="Task title" onChange={(e) => setTasks((x) => x.map((y, j) => (j === i ? { ...y, title: e.target.value } : y)))} />
+                  <input className="input" placeholder="Workstream" value={t.workstream ?? ''} aria-label="Task workstream" onChange={(e) => setTasks((x) => x.map((y, j) => (j === i ? { ...y, workstream: e.target.value || null } : y)))} list="ws-list" />
                   <input type="date" className="input" value={t.planned_start ?? ''} aria-label="Task start" onChange={(e) => setTasks((x) => x.map((y, j) => (j === i ? { ...y, planned_start: e.target.value || null } : y)))} />
                   <input type="date" className="input" value={t.planned_end ?? ''} aria-label="Task end" onChange={(e) => setTasks((x) => x.map((y, j) => (j === i ? { ...y, planned_end: e.target.value || null } : y)))} />
                   <button className="btn-ghost px-2" aria-label="Remove task" onClick={() => setTasks((x) => x.filter((_, j) => j !== i))}>✕</button>
@@ -227,4 +238,21 @@ export default function ProjectForm() {
       </div>
     </div>
   );
+}
+
+/** Task code prefix from a workstream name: "Hardware" → H, none → T. Matches the timesheet format (F1, P1, I1 …). */
+function prefixOf(ws: string | null) {
+  const m = ws?.trim().match(/[A-Za-z]/);
+  return m ? m[0].toUpperCase() : 'T';
+}
+function nextCode(tasks: TaskDraft[], ws: string | null) {
+  const p = prefixOf(ws);
+  const n = tasks.filter((t) => t.code.toUpperCase().startsWith(p) && /^\D\d+$/.test(t.code)).map((t) => Number(t.code.slice(1)));
+  return `${p}${(n.length ? Math.max(...n) : 0) + 1}`;
+}
+function addWorkstream(tasks: TaskDraft[], ws: string, count: number) {
+  const out = [...tasks];
+  for (let i = 0; i < Math.max(1, Math.min(30, count || 1)); i++)
+    out.push({ code: nextCode(out, ws), title: '', workstream: ws, planned_start: null, planned_end: null });
+  return out;
 }

@@ -9,6 +9,7 @@ import type { Role } from './lib/types';
 import Approvals from './pages/Approvals';
 import Audit from './pages/Audit';
 import Dashboard from './pages/Dashboard';
+import Data from './pages/Data';
 import Login from './pages/Login';
 import Pending from './pages/Pending';
 import ProjectDetail from './pages/ProjectDetail';
@@ -36,7 +37,8 @@ function Gate() {
         <Route path="timesheet" element={<Only roles={['admin', 'hod', 'faculty', 'student']}><Timesheet /></Only>} />
         <Route path="approvals" element={<Only roles={['admin', 'hod', 'faculty']}><Approvals /></Only>} />
         <Route path="reports" element={<Only roles={['admin', 'hod', 'viewer']}><Reports /></Only>} />
-        <Route path="users" element={<Only roles={['admin']}><Users /></Only>} />
+        <Route path="users" element={<Only roles={['admin', 'hod']}><Users /></Only>} />
+        <Route path="data" element={<Only roles={['admin']}><Data /></Only>} />
         <Route path="audit" element={<Only roles={['admin']}><Audit /></Only>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

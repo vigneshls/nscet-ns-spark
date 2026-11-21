@@ -12,10 +12,10 @@ You are a senior full-stack engineer. Build a secure, mobile-friendly web applic
 
 NS Spark is the college's innovation and commercialisation cell. It is the single point of contact for every department that wants to take an innovative project to industry or to campus use. Departments propose projects. NS Spark reviews them, tracks them while they run, and helps convert finished work into commercial products, services or IP. Management (the Secretary and the Principal) needs a **daily** and a **monthly** report of all project activity.
 
-The reference timesheet is the *Indomer wave-flume* workbook. Its model must be supported:
+The reference timesheet workbook defines the **format only** (no data from it is loaded). Its structure must be supported:
 
-- **Workstreams ("towers")**, e.g. Fabrication, PLC, Application Interface, each with a Tower Lead.
-- **Task IDs per workstream**, e.g. F1–F15, P1–P13, I1–I10.
+- **Workstreams ("towers")**, each with a Tower Lead.
+- **Task IDs numbered per workstream** from the workstream's initial (H1, H2… for Hardware; S1… for Software).
 - **Member roles:** Tower Lead, SME, Lab Technician, Student Intern, plus Faculty Lead and Co-Faculty.
 - **A day-by-day grid** of person × task × date.
 
@@ -92,6 +92,13 @@ The fields follow the IIC / YUKTI National Innovation Repository so that project
   - Totals per department.
   - The top contributors.
 - Both reports print as A4 with a title block addressed to the Secretary (TMHNU) and the Principal, and have signature lines. Both export to CSV. HoDs get a version scoped to their own department.
+
+## Phase 1 (current): no backend
+
+- The app starts empty apart from the 7 departments. First-time setup creates the NS Spark admin; the admin adds HoDs, and HoDs add their faculty and students (one at a time or pasted from Excel).
+- Email + password sign-in; passwords are salted and hashed (PBKDF2) in the browser.
+- All data is stored in the browser of the computer being used. The admin downloads and restores JSON backups from a **Data & backup** page.
+- Phase 2 connects a shared database (Supabase schema already written) so every device sees the same data.
 
 ## Non-functional requirements
 

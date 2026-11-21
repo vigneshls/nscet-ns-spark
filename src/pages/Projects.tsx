@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Empty, PageHeader, Progress, StatusBadge } from '../components/ui';
+import { DeptBadge, Empty, PageHeader, Progress, StatusBadge } from '../components/ui';
+import { deptStyle } from '../lib/constants';
 import { STATUS_LABEL } from '../lib/constants';
 import { fmtDate } from '../lib/dates';
 import { deptName, downloadCsv, projectProgress } from '../lib/logic';
@@ -68,20 +69,21 @@ export default function Projects() {
             const team = snap.members.filter((m) => m.project_id === p.id);
             const lead = team.find((m) => m.member_role === 'Faculty Lead');
             return (
-              <Link key={p.id} to={`/projects/${p.id}`} className="card flex flex-col p-4 transition hover:border-brand-500 hover:shadow">
+              <Link key={p.id} to={`/projects/${p.id}`} className="card relative flex flex-col overflow-hidden p-4 pt-5 transition hover:-translate-y-0.5 hover:shadow-lg">
+                <span className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${deptStyle(deptName(snap, p.dept_id)).strip}`} />
                 <div className="flex items-start justify-between gap-2">
-                  <span className="text-xs font-semibold text-slate-500">{p.code}</span>
+                  <span className="flex items-center gap-2 text-xs font-semibold text-slate-500"><DeptBadge code={deptName(snap, p.dept_id)} />{p.code}</span>
                   <StatusBadge status={p.status} />
                 </div>
                 <h3 className="mt-1 font-semibold leading-snug text-slate-900">{p.title}</h3>
                 <p className="mt-1 line-clamp-2 text-sm text-slate-600">{p.description}</p>
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {p.tech_stack.slice(0, 4).map((t) => <span key={t} className="rounded bg-brand-50 px-1.5 py-0.5 text-[11px] font-medium text-brand-700">{t}</span>)}
+                  {p.tech_stack.slice(0, 4).map((t) => <span key={t} className={`rounded-md px-1.5 py-0.5 text-[11px] font-medium ${deptStyle(deptName(snap, p.dept_id)).soft} text-slate-700`}>{t}</span>)}
                 </div>
                 <div className="mt-auto pt-3">
                   <Progress value={projectProgress(snap.tasks.filter((t) => t.project_id === p.id))} />
                   <div className="mt-2 flex justify-between text-xs text-slate-500">
-                    <span>{deptName(snap, p.dept_id)} · {lead?.name ?? 'No lead'} · {team.length} members</span>
+                    <span>{lead?.name ?? 'No lead'} · {team.length} members</span>
                     <span>{p.end_date ? `Due ${fmtDate(p.end_date)}` : `TRL ${p.trl}`}</span>
                   </div>
                 </div>

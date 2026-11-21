@@ -25,7 +25,7 @@ export const browserKV = (): KV => ({
     try {
       localStorage.setItem(k, v);
     } catch {
-      /* storage full or blocked — demo keeps working in memory */
+      /* storage full or blocked — keeps working in memory */
     }
   },
 });
@@ -68,9 +68,9 @@ const uid = () =>
     : `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
 export class LocalStore implements Store {
-  mode = 'demo' as const;
+  mode = 'local' as const;
   private db: DB;
-  constructor(private kv: KV, private key = 'ns-spark-demo-v1', seed?: () => DB) {
+  constructor(private kv: KV, private key = 'ns-spark-data-v1', seed?: () => DB) {
     const raw = kv.get(key);
     if (raw) {
       try {
@@ -85,6 +85,13 @@ export class LocalStore implements Store {
   }
   private save() {
     this.kv.set(this.key, JSON.stringify(this.db));
+  }
+  dump(): DB {
+    return structuredClone(this.db);
+  }
+  restore(db: DB) {
+    this.db = { ...EMPTY, ...structuredClone(db) };
+    this.save();
   }
   reset(seed: () => DB) {
     this.db = seed();

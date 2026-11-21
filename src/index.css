@@ -11,18 +11,18 @@
 }
 
 html { -webkit-text-size-adjust: 100%; }
-body { @apply bg-slate-50 text-slate-800 antialiased; }
+body { @apply bg-gradient-to-br from-slate-50 via-indigo-50/40 to-fuchsia-50/40 text-slate-800 antialiased min-h-screen; }
 
 .input {
-  @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:bg-slate-100;
+  @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100;
 }
 .label { @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500; }
 @utility btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50; }
-.btn-primary { @apply btn bg-brand-700 text-white hover:bg-brand-900; }
+.btn-primary { @apply btn bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm shadow-indigo-500/20 hover:from-indigo-700 hover:to-violet-700; }
 .btn-ghost { @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-100; }
-.btn-danger { @apply btn bg-rose-600 text-white hover:bg-rose-700; }
-.btn-ok { @apply btn bg-emerald-600 text-white hover:bg-emerald-700; }
-.card { @apply rounded-xl border border-slate-200 bg-white shadow-sm; }
+.btn-danger { @apply btn bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700; }
+.btn-ok { @apply btn bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700; }
+.card { @apply rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60; }
 .th { @apply px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500; }
 .td { @apply px-3 py-2 align-top text-sm; }
 

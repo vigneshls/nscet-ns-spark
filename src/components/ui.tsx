@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { STATUS_LABEL, STATUS_TONE } from '../lib/constants';
+import { deptStyle, STATUS_LABEL, STATUS_TONE } from '../lib/constants';
 import type { ProjectStatus, Rag } from '../lib/types';
 
 export function PageHeader({ title, sub, actions }: { title: string; sub?: ReactNode; actions?: ReactNode }) {
@@ -14,16 +14,32 @@ export function PageHeader({ title, sub, actions }: { title: string; sub?: React
   );
 }
 
-export function Stat({ label, value, hint, tone = 'slate' }: { label: string; value: ReactNode; hint?: string; tone?: 'slate' | 'green' | 'amber' | 'red' | 'blue' }) {
-  const bar = { slate: 'bg-slate-300', green: 'bg-emerald-500', amber: 'bg-amber-400', red: 'bg-rose-500', blue: 'bg-brand-500' }[tone];
+const STAT_TONE = {
+  slate: { box: 'from-slate-500 to-slate-600', text: 'text-slate-700', bg: 'bg-white' },
+  green: { box: 'from-emerald-500 to-teal-500', text: 'text-emerald-700', bg: 'bg-emerald-50/60' },
+  amber: { box: 'from-amber-400 to-orange-500', text: 'text-amber-700', bg: 'bg-amber-50/60' },
+  red: { box: 'from-rose-500 to-pink-500', text: 'text-rose-700', bg: 'bg-rose-50/60' },
+  blue: { box: 'from-sky-500 to-indigo-500', text: 'text-indigo-700', bg: 'bg-indigo-50/60' },
+  violet: { box: 'from-violet-500 to-fuchsia-500', text: 'text-violet-700', bg: 'bg-violet-50/60' },
+};
+
+export function Stat({ label, value, hint, tone = 'slate', icon }: { label: string; value: ReactNode; hint?: string; tone?: keyof typeof STAT_TONE; icon?: string }) {
+  const t = STAT_TONE[tone];
   return (
-    <div className="card relative overflow-hidden p-4">
-      <span className={`absolute inset-y-0 left-0 w-1 ${bar}`} />
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-2xl font-bold text-slate-900">{value}</div>
-      {hint && <div className="mt-0.5 text-xs text-slate-500">{hint}</div>}
+    <div className={`card flex items-center gap-3 p-4 ${t.bg}`}>
+      <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-lg text-white shadow-sm ${t.box}`} aria-hidden>{icon ?? '•'}</div>
+      <div className="min-w-0">
+        <div className="text-[11px] leading-tight font-semibold tracking-wide text-slate-500 uppercase">{label}</div>
+        <div className={`text-2xl font-bold leading-tight ${t.text}`}>{value}</div>
+        {hint && <div className="text-xs leading-tight text-slate-500">{hint}</div>}
+      </div>
     </div>
   );
+}
+
+export function DeptBadge({ code, title }: { code?: string | null; title?: string }) {
+  if (!code) return <span className="text-xs text-slate-400">—</span>;
+  return <span title={title} className={`inline-block rounded-md px-1.5 py-0.5 text-[11px] font-bold ring-1 ${deptStyle(code).chip}`}>{code}</span>;
 }
 
 export function StatusBadge({ status }: { status: ProjectStatus }) {
@@ -46,7 +62,7 @@ export function Progress({ value }: { value: number }) {
   return (
     <div className="flex items-center gap-2" aria-label={`${value}% complete`}>
       <div className="h-2 w-full min-w-16 overflow-hidden rounded-full bg-slate-200">
-        <div className="h-full rounded-full bg-brand-500" style={{ width: `${value}%` }} />
+        <div className={`h-full rounded-full bg-gradient-to-r ${value >= 100 ? 'from-emerald-500 to-teal-500' : value >= 50 ? 'from-sky-500 to-indigo-500' : 'from-amber-400 to-orange-500'}`} style={{ width: `${value}%` }} />
       </div>
       <span className="w-9 text-right text-xs font-semibold tabular-nums text-slate-600">{value}%</span>
     </div>
@@ -124,7 +140,7 @@ export function Tabs<T extends string>({ tabs, value, onChange }: { tabs: { id: 
   );
 }
 
-export function Bars({ rows, unit = '' }: { rows: { label: string; value: number }[]; unit?: string }) {
+export function Bars({ rows, unit = '' }: { rows: { label: string; value: number; color?: string }[]; unit?: string }) {
   const max = Math.max(1, ...rows.map((r) => r.value));
   return (
     <div className="space-y-2">
@@ -132,7 +148,7 @@ export function Bars({ rows, unit = '' }: { rows: { label: string; value: number
         <div key={r.label} className="grid grid-cols-[64px_1fr_56px] items-center gap-2 text-sm">
           <span className="font-semibold text-slate-600">{r.label}</span>
           <div className="h-3 rounded bg-slate-100">
-            <div className="h-3 rounded bg-brand-500" style={{ width: `${(r.value / max) * 100}%` }} />
+            <div className={`h-3 rounded ${r.color ?? 'bg-gradient-to-r from-sky-500 to-violet-500'}`} style={{ width: `${(r.value / max) * 100}%` }} />
           </div>
           <span className="text-right tabular-nums text-slate-700">
             {r.value}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Empty, ErrorBox, Field, Modal, PageHeader, Progress, RagDot, StatusBadge, Tabs } from '../components/ui';
+import { DeptBadge, Empty, ErrorBox, Field, Modal, PageHeader, Progress, RagDot, StatusBadge, Tabs } from '../components/ui';
 import { addMember, deleteProject, deleteTask, postStatus, removeMember, saveTask, setProjectStatus, type MemberDraft } from '../lib/actions';
 import { MEMBER_ROLES, STATUS_LABEL, TASK_STATUS_LABEL, TRL_LABEL } from '../lib/constants';
 import { fmtDate, fmtMonth, monthRange, parseYmd, ymd } from '../lib/dates';
@@ -53,8 +53,9 @@ export default function ProjectDetail() {
         title={p.title}
         sub={
           <span className="flex flex-wrap items-center gap-2">
+            <DeptBadge code={deptName(snap, p.dept_id)} />
             <span className="font-semibold">{p.code}</span>·<span>{snap.departments.find((d) => d.id === p.dept_id)?.name}</span>
-            {p.collab_dept_ids.length > 0 && <span>· with {p.collab_dept_ids.map((d) => deptName(snap, d)).join(', ')}</span>}
+            {p.collab_dept_ids.length > 0 && <span className="flex items-center gap-1">· with {p.collab_dept_ids.map((d) => <DeptBadge key={d} code={deptName(snap, d)} />)}</span>}
             <StatusBadge status={p.status} />
           </span>
         }
@@ -96,7 +97,7 @@ export default function ProjectDetail() {
             <div><h3 className="label">Solution</h3><p className="text-sm">{p.solution || '—'}</p></div>
             <div>
               <h3 className="label">Technical stack</h3>
-              <div className="flex flex-wrap gap-1">{p.tech_stack.map((t) => <span key={t} className="rounded bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">{t}</span>)}</div>
+              <div className="flex flex-wrap gap-1">{p.tech_stack.map((t) => <span key={t} className="rounded-md bg-gradient-to-r from-indigo-50 to-fuchsia-50 px-2 py-0.5 text-xs font-medium text-indigo-800 ring-1 ring-indigo-100">{t}</span>)}</div>
             </div>
           </div>
           <div className="card space-y-2 p-5 text-sm">
@@ -242,7 +243,12 @@ function TasksTab({ projectId, staff, run }: { projectId: string; staff: boolean
         <div className="card grid gap-2 p-4 sm:grid-cols-[80px_1fr_180px_auto]">
           <input className="input" value={nt.code} onChange={(e) => setNt({ ...nt, code: e.target.value })} aria-label="New task code" />
           <input className="input" placeholder="New task" value={nt.title} onChange={(e) => setNt({ ...nt, title: e.target.value })} aria-label="New task title" />
-          <input className="input" placeholder="Workstream" list="streams" value={nt.workstream} onChange={(e) => setNt({ ...nt, workstream: e.target.value })} aria-label="New task workstream" />
+          <input className="input" placeholder="Workstream" list="streams" value={nt.workstream} onChange={(e) => {
+            const ws = e.target.value;
+            const p = ws.trim().match(/[A-Za-z]/)?.[0].toUpperCase() ?? 'T';
+            const nums = tasks.filter((t) => t.code.toUpperCase().startsWith(p) && /^\D\d+$/.test(t.code)).map((t) => Number(t.code.slice(1)));
+            setNt({ ...nt, workstream: ws, code: `${p}${(nums.length ? Math.max(...nums) : 0) + 1}` });
+          }} aria-label="New task workstream" />
           <datalist id="streams">{streams.filter(Boolean).map((s) => <option key={s} value={s} />)}</datalist>
           <button className="btn-primary" disabled={nt.title.trim().length < 3} onClick={() => void run(() => saveTask(store, me!, p, snap.members, { code: nt.code, title: nt.title.trim(), workstream: nt.workstream || null, sort: tasks.length }), 'Task added').then((ok) => ok && setNt({ code: `T${tasks.length + 2}`, title: '', workstream: nt.workstream }))}>Add task</button>
         </div>

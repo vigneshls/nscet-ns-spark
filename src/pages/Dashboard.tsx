@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Bars, Empty, ErrorBox, PageHeader, Progress, RagDot, Spinner, Stat, StatusBadge } from '../components/ui';
+import { Bars, DeptBadge, Empty, ErrorBox, PageHeader, Progress, RagDot, Spinner, Stat, StatusBadge } from '../components/ui';
+import { deptStyle } from '../lib/constants';
 import { addDays, fmtDate, ymd } from '../lib/dates';
 import { useRows } from '../lib/hooks';
 import { deptName, projectProgress } from '../lib/logic';
@@ -41,7 +42,6 @@ export default function Dashboard() {
     <div>
       <PageHeader
         title={title}
-        sub={`As of ${fmtDate(today)}`}
         actions={
           <>
             {(me.role === 'admin' || me.role === 'hod') && <Link to="/projects/new" className="btn-primary">+ New project</Link>}
@@ -52,16 +52,26 @@ export default function Dashboard() {
       />
       <ErrorBox msg={error ?? ts.error ?? su.error} />
 
+      <div className="mb-5 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 p-5 text-white shadow-lg shadow-indigo-500/20">
+        <div className="text-sm text-indigo-100">{fmtDate(today)}</div>
+        <div className="mt-1 text-xl font-bold sm:text-2xl">Hello, {me.name.split(' ')[0]} 👋</div>
+        <div className="mt-1 text-sm text-indigo-100">
+          {active.length} active · {proposed.length} awaiting review · {completed.length} completed{myApprovals ? ` · ${myApprovals} timesheet entr${myApprovals === 1 ? 'y' : 'ies'} for you to review` : ''}
+        </div>
+      </div>
+
+      {snap.projects.length === 0 && (me.role === 'admin' || me.role === 'hod') && <GettingStarted role={me.role} />}
+
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Stat label="Active projects" value={active.length} tone="green" />
-        <Stat label="Proposals pending" value={proposed.length} tone="blue" hint={me.role === 'admin' ? 'awaiting NS Spark review' : undefined} />
-        <Stat label="Completed" value={completed.length} tone="slate" />
-        <Stat label="Hours today" value={Math.round(hoursToday * 10) / 10} tone="blue" />
-        <Stat label="Hours (30 days)" value={Math.round(hours30)} tone="slate" />
+        <Stat label="Active projects" value={active.length} tone="green" icon="◆" />
+        <Stat label="Proposals" value={proposed.length} tone="blue" icon="✦" hint={me.role === 'admin' ? 'awaiting review' : undefined} />
+        <Stat label="Completed" value={completed.length} tone="violet" icon="✔" />
+        <Stat label="Hours today" value={Math.round(hoursToday * 10) / 10} tone="amber" icon="◷" />
+        <Stat label="Hours (30 days)" value={Math.round(hours30)} tone="blue" icon="Σ" />
         {me.role === 'viewer' ? (
-          <Stat label="Blocked (red)" value={red.length} tone={red.length ? 'red' : 'slate'} />
+          <Stat label="Blocked (red)" value={red.length} tone={red.length ? 'red' : 'slate'} icon="!" />
         ) : (
-          <Stat label="Entries to approve" value={myApprovals} tone={myApprovals ? 'amber' : 'slate'} />
+          <Stat label="To approve" value={myApprovals} tone={myApprovals ? 'red' : 'slate'} icon="✓" />
         )}
       </div>
 
@@ -82,7 +92,7 @@ export default function Dashboard() {
                     const pids = new Set(ps.map((p) => p.id));
                     return (
                       <tr key={d.id} className="border-b border-slate-100 last:border-0">
-                        <td className="td font-semibold" title={d.name}>{d.code}</td>
+                        <td className="td"><DeptBadge code={d.code} title={d.name} /></td>
                         <td className="td text-right tabular-nums">{ps.filter((p) => p.status === 'active').length}</td>
                         <td className="td text-right tabular-nums">{ps.filter((p) => p.status === 'proposed').length}</td>
                         <td className="td text-right tabular-nums">{ps.filter((p) => p.status === 'completed' || p.status === 'commercialised').length}</td>
@@ -95,7 +105,15 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="card p-4">
-            <h2 className="mb-3 font-semibold">Logged hours, last 7 days</h2>
+            <h2 className="mb-3 font-semibold">Hours by department, last 30 days</h2>
+            <Bars
+              unit=" h"
+              rows={snap.departments.map((d) => {
+                const pids = new Set(projects.filter((p) => p.dept_id === d.id).map((p) => p.id));
+                return { label: d.code, color: deptStyle(d.code).bar, value: Math.round(entries.filter((e) => pids.has(e.project_id)).reduce((a, e) => a + Number(e.hours), 0)) };
+              })}
+            />
+            <h2 className="mt-5 mb-3 font-semibold">Logged hours, last 7 days</h2>
             <Bars
               unit=" h"
               rows={Array.from({ length: 7 }, (_, i) => addDays(today, i - 6)).map((d) => ({
@@ -121,7 +139,7 @@ export default function Dashboard() {
               {proposed.map((p) => (
                 <Link key={p.id} to={`/projects/${p.id}`} className="card block p-4 transition hover:border-brand-500">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="text-xs font-semibold text-slate-500">{p.code} · {deptName(snap, p.dept_id)}</div>
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500"><DeptBadge code={deptName(snap, p.dept_id)} />{p.code}</div>
                     <StatusBadge status={p.status} />
                   </div>
                   <div className="mt-1 font-semibold">{p.title}</div>
@@ -173,7 +191,7 @@ function ProjectTable({ projects, lastUpdate }: { projects: Project[]; lastUpdat
                   <Link to={`/projects/${p.id}`} className="font-semibold text-brand-700 hover:underline">{p.title}</Link>
                   <div className="text-xs text-slate-500">{p.code}</div>
                 </td>
-                <td className="td">{deptName(snap, p.dept_id)}</td>
+                <td className="td"><DeptBadge code={deptName(snap, p.dept_id)} /></td>
                 <td className="td">{lead?.name ?? '—'}</td>
                 <td className="td"><StatusBadge status={p.status} /></td>
                 <td className="td"><Progress value={projectProgress(snap.tasks.filter((t) => t.project_id === p.id))} /></td>
@@ -186,6 +204,37 @@ function ProjectTable({ projects, lastUpdate }: { projects: Project[]; lastUpdat
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function GettingStarted({ role }: { role: string }) {
+  const steps =
+    role === 'admin'
+      ? [
+          ['☺', 'Add the HoDs', 'People → Add person. One HoD per department; give each a temporary password.', '/users'],
+          ['✦', 'HoDs propose projects', 'Each HoD adds faculty and students, then creates a project proposal.', '/proposals'],
+          ['✓', 'Review and approve', 'Approve proposals here; approved projects become active.', '/proposals'],
+          ['▤', 'Daily report', 'Teams log time; print the daily report for the Secretary and Principal.', '/reports'],
+        ]
+      : [
+          ['☺', 'Add your people', 'People → Add person / Add many for faculty and students.', '/users'],
+          ['✦', 'Create a proposal', 'Title, team, description, technical stack, workstreams and tasks.', '/projects/new'],
+          ['◷', 'Teams log daily work', 'Once NS Spark approves, members log time and faculty approve it.', '/timesheet'],
+        ];
+  const tones = ['from-sky-500 to-indigo-500', 'from-violet-500 to-fuchsia-500', 'from-emerald-500 to-teal-500', 'from-amber-400 to-orange-500'];
+  return (
+    <div className="card mb-5 p-5">
+      <h2 className="font-semibold">Getting started</h2>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {steps.map(([icon, t, d, to], i) => (
+          <Link key={t} to={to} className="group rounded-xl border border-slate-200 p-3 transition hover:border-indigo-300 hover:shadow">
+            <div className={`grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br text-white ${tones[i % tones.length]}`}>{icon}</div>
+            <div className="mt-2 text-sm font-semibold group-hover:text-indigo-700">{i + 1}. {t}</div>
+            <div className="text-xs text-slate-500">{d}</div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

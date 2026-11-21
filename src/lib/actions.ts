@@ -1,3 +1,4 @@
+import type { LocalAuth } from './localAuth';
 import { z } from 'zod';
 import { ADMIN_ONLY_STATUSES, MAX_HOURS_PER_DAY } from './constants';
 import { ymd } from './dates';
@@ -13,7 +14,7 @@ const deny = (msg = 'You do not have permission for this action.') => {
 
 async function audit(store: Store, me: Profile, action: string, entity: string, entity_id: string | null, detail?: string) {
   // In Supabase mode, database triggers write the audit log (clients cannot insert into it).
-  if (store.mode !== 'demo') return;
+  if (store.mode !== 'local') return;
   await store.insert('audit_log', { actor_id: me.id, action, entity, entity_id, detail: detail ?? null });
 }
 
@@ -209,3 +210,59 @@ export async function setUserAccess(store: Store, me: Profile, user: Profile, ro
 }
 
 export { MAX_HOURS_PER_DAY };
+
+// ----- local accounts (no backend yet) -----
+
+export interface NewUser {
+  name: string;
+  email: string;
+  role: Role;
+  dept_id: string | null;
+  designation: string | null;
+  reg_no: string | null;
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Who may create which accounts: admin → anyone; HoD → faculty and students of their own department. */
+export function canCreateUser(me: Profile, role: Role, dept_id: string | null) {
+  if (isAdmin(me)) return true;
+  return me.role === 'hod' && !!me.dept_id && dept_id === me.dept_id && (role === 'faculty' || role === 'student');
+}
+
+export async function createUser(store: Store, auth: LocalAuth, me: Profile | null, u: NewUser, password: string): Promise<Profile> {
+  const first = me === null; // first-run setup creates the NS Spark admin
+  if (!first && !canCreateUser(me!, u.role, u.dept_id)) deny('HoDs can add faculty and students of their own department only.');
+  if (first && u.role !== 'admin') deny();
+  if (u.name.trim().length < 3) throw new ActionError('Enter the full name.');
+  if (!EMAIL_RE.test(u.email.trim())) throw new ActionError('Enter a valid email address.');
+  if (['hod', 'faculty', 'student'].includes(u.role) && !u.dept_id) throw new ActionError('Choose the department.');
+  if (auth.hasEmail(u.email)) throw new ActionError('An account with this email already exists.');
+  const profile = await store.insert('profiles', {
+    name: u.name.trim(),
+    email: u.email.trim().toLowerCase(),
+    role: u.role,
+    dept_id: ['admin', 'viewer', 'pending'].includes(u.role) ? null : u.dept_id,
+    designation: u.designation?.trim() || null,
+    reg_no: u.reg_no?.trim() || null,
+  });
+  try {
+    await auth.create(profile.email, password, profile.id);
+  } catch (e) {
+    await store.remove('profiles', profile.id);
+    throw new ActionError((e as Error).message);
+  }
+  await audit(store, me ?? profile, first ? 'setup_admin' : `user_created:${u.role}`, 'profile', profile.id, profile.email);
+  return profile;
+}
+
+export async function resetPassword(store: Store, auth: LocalAuth, me: Profile, target: Profile, password: string) {
+  const self = me.id === target.id;
+  if (!self && !canCreateUser(me, target.role, target.dept_id)) deny();
+  try {
+    await auth.setPassword(target.id, password);
+  } catch (e) {
+    throw new ActionError((e as Error).message);
+  }
+  await audit(store, me, self ? 'password_changed' : 'password_reset', 'profile', target.id, target.email);
+}

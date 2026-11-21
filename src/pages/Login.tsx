@@ -1,82 +1,93 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { ErrorBox } from '../components/ui';
-import { COLLEGE, MANAGEMENT, ROLE_LABEL } from '../lib/constants';
-import { liveAvailable, store, switchMode } from '../lib/store';
-import type { Profile } from '../lib/types';
+import { COLLEGE, DEPARTMENTS, deptStyle, MANAGEMENT } from '../lib/constants';
+import { MIN_PASSWORD } from '../lib/localAuth';
 
 export default function Login() {
-  const { mode } = useApp();
+  const { mode, needsSetup } = useApp();
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="hidden flex-col justify-between bg-brand-900 p-10 text-white lg:flex">
-        <div className="flex items-center gap-3">
-          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="h-10 w-10" />
-          <span className="text-lg font-bold">NS Spark</span>
+    <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
+      <div className="relative hidden overflow-hidden bg-gradient-to-br from-brand-900 via-indigo-900 to-fuchsia-900 p-10 text-white lg:flex lg:flex-col lg:justify-between">
+        <div className="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-fuchsia-500/30 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 -left-16 h-72 w-72 rounded-full bg-amber-400/20 blur-3xl" />
+        <div className="relative flex items-center gap-3">
+          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="h-11 w-11" />
+          <span className="text-xl font-bold">NS Spark</span>
         </div>
-        <div>
-          <h1 className="text-4xl font-bold leading-tight">One umbrella for every innovation project at NSCET.</h1>
-          <p className="mt-4 max-w-md text-brand-100">
-            Departments propose projects, NS Spark reviews them, teams log their daily work, and management gets a daily and monthly report.
-          </p>
+        <div className="relative">
+          <h1 className="text-4xl leading-tight font-bold">
+            One umbrella for every <span className="bg-gradient-to-r from-amber-300 to-pink-300 bg-clip-text text-transparent">innovation project</span> at NSCET.
+          </h1>
+          <p className="mt-4 max-w-md text-indigo-100">Departments propose. NS Spark reviews. Teams log daily work. Management gets the daily and monthly report.</p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {DEPARTMENTS.map((d) => (
+              <span key={d.code} className={`rounded-lg px-2.5 py-1 text-xs font-bold ring-1 ${deptStyle(d.code).chip}`}>{d.code}</span>
+            ))}
+          </div>
         </div>
-        <div className="text-xs text-brand-100">{COLLEGE} · an initiative under {MANAGEMENT}</div>
+        <div className="relative text-xs text-indigo-200">{COLLEGE} · an initiative under {MANAGEMENT}</div>
       </div>
-      <div className="flex items-center justify-center p-6">{mode === 'demo' ? <DemoLogin /> : <RealLogin />}</div>
-    </div>
-  );
-}
-
-function DemoLogin() {
-  const { demoLogin } = useApp();
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [deptCode, setDeptCode] = useState<Record<string, string>>({});
-  useEffect(() => {
-    void store.list('profiles').then(setProfiles);
-    void store.list('departments').then((ds) => setDeptCode(Object.fromEntries(ds.map((d) => [d.id, d.code]))));
-  }, []);
-  const quick = ['u-admin', 'u-principal', 'u-hod-mech', 'u-hod-aids', 'u-fac-mech-1', 'u-fac-mech-2', 'u-stu-mech-1'];
-  const [other, setOther] = useState('');
-
-  return (
-    <div className="w-full max-w-md">
-      <h2 className="text-2xl font-bold text-slate-900">Try the demo</h2>
-      <p className="mt-1 text-sm text-slate-500">Pick a role to sign in. Demo data lives only in your browser and uses placeholder names.</p>
-      <div className="mt-5 space-y-2">
-        {quick
-          .map((id) => profiles.find((p) => p.id === id))
-          .filter(Boolean)
-          .map((p) => (
-            <button key={p!.id} onClick={() => demoLogin(p!.id)} className="card flex w-full items-center justify-between px-4 py-3 text-left transition hover:border-brand-500 hover:shadow">
-              <span>
-                <span className="block font-semibold text-slate-800">{p!.name}</span>
-                <span className="text-xs text-slate-500">{ROLE_LABEL[p!.role]}{p!.dept_id ? ` · ${deptCode[p!.dept_id] ?? ''}` : ''}</span>
-              </span>
-              <span className="text-brand-500">→</span>
-            </button>
-          ))}
-      </div>
-      {liveAvailable && (
-        <button className="mt-4 text-sm font-semibold text-brand-700 hover:underline" onClick={() => switchMode('live')}>
-          ← Back to the real NS Spark sign-in
-        </button>
-      )}
-      <div className="mt-5 flex gap-2">
-        <select className="input" value={other} onChange={(e) => setOther(e.target.value)} aria-label="Any demo user">
-          <option value="">…or any other demo user</option>
-          {profiles.filter((p) => p.role !== 'pending').map((p) => (
-            <option key={p.id} value={p.id}>{p.name} — {ROLE_LABEL[p.role]}</option>
-          ))}
-        </select>
-        <button className="btn-primary" disabled={!other} onClick={() => demoLogin(other)}>Go</button>
+      <div className="flex items-center justify-center bg-gradient-to-b from-white to-indigo-50/50 p-6">
+        {mode === 'local' && needsSetup ? <Setup /> : <SignIn />}
       </div>
     </div>
   );
 }
 
-function RealLogin() {
-  const { signIn, signUp } = useApp();
-  const [mode, setMode] = useState<'in' | 'up'>('in');
+function MobileBrand() {
+  return (
+    <div className="mb-6 flex items-center gap-2 lg:hidden">
+      <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="h-9 w-9" />
+      <span className="text-lg font-bold text-brand-900">NS Spark</span>
+    </div>
+  );
+}
+
+function Setup() {
+  const { setupAdmin } = useApp();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [pw2, setPw2] = useState('');
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErr(null);
+    if (pw !== pw2) return setErr('Passwords do not match.');
+    setBusy(true);
+    try {
+      await setupAdmin({ name, email, role: 'admin', dept_id: null, designation: 'NS Spark Coordinator', reg_no: null }, pw);
+    } catch (x) {
+      setErr((x as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="w-full max-w-sm space-y-4">
+      <MobileBrand />
+      <div>
+        <span className="inline-block rounded-full bg-gradient-to-r from-amber-400 to-pink-500 px-3 py-1 text-xs font-bold text-white">First-time setup</span>
+        <h2 className="mt-2 text-2xl font-bold text-slate-900">Create the NS Spark admin</h2>
+        <p className="mt-1 text-sm text-slate-500">This account manages departments, HoDs, proposals and reports. You can add more admins later.</p>
+      </div>
+      <div><label className="label" htmlFor="sn">Full name</label><input id="sn" className="input" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required /></div>
+      <div><label className="label" htmlFor="se">Email</label><input id="se" type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></div>
+      <div><label className="label" htmlFor="sp">Password</label><input id="sp" type="password" className="input" value={pw} onChange={(e) => setPw(e.target.value)} minLength={MIN_PASSWORD} autoComplete="new-password" required /></div>
+      <div><label className="label" htmlFor="sp2">Confirm password</label><input id="sp2" type="password" className="input" value={pw2} onChange={(e) => setPw2(e.target.value)} minLength={MIN_PASSWORD} autoComplete="new-password" required /></div>
+      <ErrorBox msg={err} />
+      <button className="btn-primary w-full" disabled={busy}>{busy ? 'Creating…' : 'Create admin & start'}</button>
+    </form>
+  );
+}
+
+function SignIn() {
+  const { mode, signIn, signUp } = useApp();
+  const [view, setView] = useState<'in' | 'up'>('in');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
@@ -88,11 +99,10 @@ function RealLogin() {
     e.preventDefault();
     setErr(null);
     setInfo(null);
-    if (mode === 'up' && name.trim().length < 3) return setErr('Enter your full name.');
-    if (pw.length < 8) return setErr('Password must be at least 8 characters.');
+    if (view === 'up' && name.trim().length < 3) return setErr('Enter your full name.');
     setBusy(true);
     try {
-      if (mode === 'in') await signIn(email.trim(), pw);
+      if (view === 'in') await signIn(email.trim(), pw);
       else setInfo(await signUp(name.trim(), email.trim(), pw));
     } catch (x) {
       setErr((x as Error).message);
@@ -103,35 +113,26 @@ function RealLogin() {
 
   return (
     <form onSubmit={submit} className="w-full max-w-sm space-y-4">
+      <MobileBrand />
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">{mode === 'in' ? 'Sign in' : 'Create account'}</h2>
-        <p className="mt-1 text-sm text-slate-500">Use your college email. New accounts are activated by the NS Spark admin.</p>
+        <h2 className="text-2xl font-bold text-slate-900">{view === 'in' ? 'Sign in' : 'Create account'}</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          {mode === 'local' ? 'Accounts are created by the NS Spark admin or your HoD.' : 'Use your college email. New accounts are activated by the NS Spark admin.'}
+        </p>
       </div>
-      {mode === 'up' && (
-        <div>
-          <label className="label" htmlFor="name">Full name</label>
-          <input id="name" className="input" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required />
-        </div>
+      {view === 'up' && (
+        <div><label className="label" htmlFor="name">Full name</label><input id="name" className="input" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required /></div>
       )}
-      <div>
-        <label className="label" htmlFor="email">Email</label>
-        <input id="email" type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
-      </div>
-      <div>
-        <label className="label" htmlFor="pw">Password</label>
-        <input id="pw" type="password" className="input" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete={mode === 'in' ? 'current-password' : 'new-password'} required minLength={8} />
-      </div>
+      <div><label className="label" htmlFor="email">Email</label><input id="email" type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></div>
+      <div><label className="label" htmlFor="pw">Password</label><input id="pw" type="password" className="input" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete={view === 'in' ? 'current-password' : 'new-password'} required /></div>
       <ErrorBox msg={err} />
       {info && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{info}</div>}
-      <button className="btn-primary w-full" disabled={busy}>{busy ? 'Please wait…' : mode === 'in' ? 'Sign in' : 'Create account'}</button>
-      <button type="button" className="w-full text-sm font-semibold text-brand-700 hover:underline" onClick={() => setMode(mode === 'in' ? 'up' : 'in')}>
-        {mode === 'in' ? 'New here? Create an account' : 'Have an account? Sign in'}
-      </button>
-      <div className="border-t border-slate-200 pt-4 text-center">
-        <button type="button" className="btn-ghost w-full" onClick={() => switchMode('demo')}>
-          Try the demo (no login, sample data)
+      <button className="btn-primary w-full" disabled={busy}>{busy ? 'Please wait…' : view === 'in' ? 'Sign in' : 'Create account'}</button>
+      {mode === 'supabase' && (
+        <button type="button" className="w-full text-sm font-semibold text-brand-700 hover:underline" onClick={() => setView(view === 'in' ? 'up' : 'in')}>
+          {view === 'in' ? 'New here? Create an account' : 'Have an account? Sign in'}
         </button>
-      </div>
+      )}
     </form>
   );
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { PageHeader, Progress, RagDot, Spinner, StatusBadge, Tabs } from '../components/ui';
+import { DeptBadge, PageHeader, Progress, RagDot, Spinner, StatusBadge, Tabs } from '../components/ui';
 import { COLLEGE, MANAGEMENT } from '../lib/constants';
 import { fmtDate, fmtMonth, monthRange, ymd } from '../lib/dates';
 import { useRows } from '../lib/hooks';
@@ -88,7 +88,7 @@ function Daily({ s, date, entries, pendingAll, updates, who }: { s: Snapshot; da
           <tbody>
             {r.byDept.map((d) => (
               <tr key={d.dept.id} className="border-b border-slate-100 last:border-0">
-                <td className="td">{d.dept.name}</td><td className="td text-right">{d.active}</td><td className="td text-right">{d.proposed}</td><td className="td text-right">{d.completed}</td><td className="td text-right">{d.entries}</td><td className="td text-right">{d.hours}</td>
+                <td className="td"><DeptBadge code={d.dept.code} /> <span className="ml-1">{d.dept.name}</span></td><td className="td text-right">{d.active}</td><td className="td text-right">{d.proposed}</td><td className="td text-right">{d.completed}</td><td className="td text-right">{d.entries}</td><td className="td text-right">{d.hours}</td>
               </tr>
             ))}
           </tbody>
@@ -103,7 +103,7 @@ function Daily({ s, date, entries, pendingAll, updates, who }: { s: Snapshot; da
             {r.projects.map((x) => (
               <tr key={x.project.id} className="border-b border-slate-100 last:border-0">
                 <td className="td"><div className="font-semibold">{x.project.code}</div><div className="text-xs text-slate-600">{x.project.title}</div></td>
-                <td className="td">{deptName(s, x.project.dept_id)}</td>
+                <td className="td"><DeptBadge code={deptName(s, x.project.dept_id)} /></td>
                 <td className="td"><Progress value={x.progress} /></td>
                 <td className="td"><RagDot rag={x.status?.rag} /></td>
                 <td className="td text-right">{x.people}</td>
@@ -166,7 +166,7 @@ function Monthly({ s, month, entries, updates }: { s: Snapshot; month: string; e
             {r.projects.map((x) => (
               <tr key={x.project.id} className="border-b border-slate-100 last:border-0">
                 <td className="td"><div className="font-semibold">{x.project.code}</div><div className="text-xs text-slate-600">{x.project.title}</div></td>
-                <td className="td">{deptName(s, x.project.dept_id)}</td>
+                <td className="td"><DeptBadge code={deptName(s, x.project.dept_id)} /></td>
                 <td className="td"><StatusBadge status={x.project.status} /></td>
                 <td className="td"><Progress value={x.progress} /></td>
                 <td className="td text-right">{x.tasksDone}/{x.tasksTotal}</td>

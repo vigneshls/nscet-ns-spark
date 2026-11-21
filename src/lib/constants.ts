@@ -93,3 +93,16 @@ export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
 };
 
 export const MAX_HOURS_PER_DAY = 12;
+
+/** One colour family per department, used for badges, card strips and charts. Full class strings so Tailwind keeps them. */
+export const DEPT_STYLE: Record<string, { chip: string; strip: string; bar: string; soft: string }> = {
+  CSE: { chip: 'bg-blue-100 text-blue-800 ring-blue-200', strip: 'from-blue-500 to-indigo-500', bar: 'bg-blue-500', soft: 'bg-blue-50' },
+  AIDS: { chip: 'bg-violet-100 text-violet-800 ring-violet-200', strip: 'from-violet-500 to-fuchsia-500', bar: 'bg-violet-500', soft: 'bg-violet-50' },
+  IT: { chip: 'bg-cyan-100 text-cyan-800 ring-cyan-200', strip: 'from-cyan-500 to-sky-500', bar: 'bg-cyan-500', soft: 'bg-cyan-50' },
+  MECH: { chip: 'bg-orange-100 text-orange-800 ring-orange-200', strip: 'from-orange-500 to-amber-500', bar: 'bg-orange-500', soft: 'bg-orange-50' },
+  ECE: { chip: 'bg-emerald-100 text-emerald-800 ring-emerald-200', strip: 'from-emerald-500 to-teal-500', bar: 'bg-emerald-500', soft: 'bg-emerald-50' },
+  EEE: { chip: 'bg-yellow-100 text-yellow-900 ring-yellow-200', strip: 'from-yellow-400 to-amber-500', bar: 'bg-yellow-500', soft: 'bg-yellow-50' },
+  CIVIL: { chip: 'bg-rose-100 text-rose-800 ring-rose-200', strip: 'from-rose-500 to-pink-500', bar: 'bg-rose-500', soft: 'bg-rose-50' },
+};
+export const DEFAULT_DEPT_STYLE = { chip: 'bg-slate-100 text-slate-700 ring-slate-200', strip: 'from-slate-400 to-slate-500', bar: 'bg-slate-500', soft: 'bg-slate-50' };
+export const deptStyle = (code?: string | null) => (code && DEPT_STYLE[code]) || DEFAULT_DEPT_STYLE;

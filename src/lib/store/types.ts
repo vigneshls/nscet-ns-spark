@@ -9,9 +9,9 @@ export interface Query<T> {
   limit?: number;
 }
 
-/** Minimal table-level data access. Authorization lives in RLS (Supabase) — the demo store is single-browser. */
+/** Minimal table-level data access. Authorization lives in RLS (Supabase) — the local store keeps everything in this browser. */
 export interface Store {
-  mode: 'demo' | 'supabase';
+  mode: 'local' | 'supabase';
   list<K extends TableName>(table: K, q?: Query<Tables[K]>): Promise<Tables[K][]>;
   insert<K extends TableName>(table: K, row: Partial<Tables[K]>): Promise<Tables[K]>;
   insertMany<K extends TableName>(table: K, rows: Partial<Tables[K]>[]): Promise<Tables[K][]>;

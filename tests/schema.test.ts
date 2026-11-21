@@ -83,7 +83,7 @@ describe('supabase/schema.sql', () => {
   });
 
   it('HoD proposes only for own department and cannot self-approve', async () => {
-    const ins = `insert into projects (code, title, dept_id, status, created_by) values ($1, 'Wave flume generator', $2, $3, $4) returning id`;
+    const ins = `insert into projects (code, title, dept_id, status, created_by) values ($1, 'Campus energy monitor', $2, $3, $4) returning id`;
     projectId = (await as(U.hod, ins, ['NSS-MECH-2026-001', mech, 'proposed', U.hod]))[0].id as string;
     await expect(as(U.hod, ins, ['NSS-CSE-2026-009', cse, 'proposed', U.hod])).rejects.toThrow(/row-level security/);
     await expect(as(U.hod, ins, ['NSS-MECH-2026-002', mech, 'active', U.hod])).rejects.toThrow(/draft or proposed/);

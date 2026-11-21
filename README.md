@@ -1,108 +1,75 @@
 # NS Spark — NSCET Innovation Project Tracker
 
-**Live app:** https://vigneshls.github.io/nscet-ns-spark/ (connected to the Supabase project *TMHNU's NS Spark*, Mumbai). `npm run dev` still runs the offline demo.
+**App:** https://vigneshls.github.io/nscet-ns-spark/
 
-**Demo link (no login, sample data, nothing touches the database):** https://vigneshls.github.io/nscet-ns-spark/?demo
+NS Spark is the single umbrella for innovation projects across the seven departments of Nadar Saraswathi College of Engineering and Technology (an initiative under TMHNU). HoDs propose projects, NS Spark reviews and approves them, faculty and students log daily work, and the Secretary and Principal get a daily and a monthly report.
 
-NS Spark is the single umbrella for innovation projects across the seven departments of Nadar Saraswathi College of Engineering and Technology. It works like this:
+![Dashboard](docs/screenshots/4-admin-dash.png)
 
-1. HoDs propose projects.
-2. NS Spark reviews and approves them.
-3. Faculty and students log their daily work, and project staff approve it.
-4. The Secretary and the Principal get a daily and a monthly report.
+## How to start
 
-![Daily report](docs/screenshots/4-daily-report.png)
+1. Open the app. The first visit shows **First-time setup**: create the NS Spark admin account.
+2. **People → Add person**: add one HoD per department (with a temporary password).
+3. Each HoD signs in and adds their faculty and students: **People → Add many** accepts lines pasted from Excel (`Name, Email, Register no, Year`).
+4. HoD → **+ New project**: title, team, description, problem/solution, technical stack, TRL, workstreams and tasks → **Submit to NS Spark**.
+5. Admin → **Proposals** → Approve. Team members then log time in **My Timesheet**; project faculty approve it in **Approvals** and post the daily status.
+6. **Reports** → daily or monthly → **Print / Save PDF** for the Secretary and Principal.
+
+## Important: where the data is stored (phase 1)
+
+There is **no backend yet**. Everything is saved in the browser of the computer you use:
+
+- Use **one main computer** for NS Spark. Other computers and phones start empty.
+- Clearing the browser's site data deletes everything — go to **Data & backup → Download backup** regularly. **Restore** brings a backup back on any computer.
+- Passwords are salted and hashed (PBKDF2-SHA-256), never stored in plain text. This is not server-grade security: anyone with access to that browser profile can read the project data.
+
+Phase 2 connects the shared database so every device sees the same live data (see below).
 
 ## Features
 
-- **Role-based panels:** NS Spark Admin, Head of Department, Faculty, Student, and Secretary/Principal (read-only).
-- **HoD dashboard:**
-  - Active, proposed and completed projects for the department.
-  - Hours logged today and over the last 30 days.
-  - Entries waiting for approval.
-- **Project proposal form:**
-  - Title, department and collaborating departments, description, problem, solution, technical stack.
-  - Domain, TRL 0–9, stage, IPR status, industry partner, budget and dates. These fields follow IIC/YUKTI.
-  - Faculty and student team.
-  - Planned tasks grouped by workstream.
-- **Review workflow:** approve, request changes or reject, with notes. Codes are assigned automatically (`NSS-MECH-2026-001`).
-- **Projects modelled on the Indomer workbook:** workstreams ("towers"), task IDs (F1…, P1…, I1…), and the roles Tower Lead, SME, Lab Technician and Student Intern.
-- **Daily timesheet:**
-  - Entries are capped at 12 hours per person per day.
-  - Backdating is limited to 7 days.
-  - Faculty approve entries, and nobody can approve their own.
-  - The project view shows a month matrix like the Excel sheet.
-- **Daily status per project:** green, amber or red health, with blockers and the next day's plan.
-- **Reports:** daily and monthly, ready to print or save as PDF, and exportable to CSV.
-- **Admin tools:** user approval and role assignment, and an audit log.
+- Panels for **NS Spark Admin**, **HoD**, **Faculty**, **Student**, **Secretary / Principal (view only)**.
+- Colour-coded departments: CSE, AIDS, IT, MECH, ECE, EEE, CIVIL.
+- Project proposals with review workflow (approve / request changes / reject, with notes) and automatic codes (`NSS-MECH-2026-001`).
+- Timesheet **format** from the reference workbook (structure only, no data): workstreams ("towers") with tasks numbered from the workstream's initial (H1, H2… S1…), member roles (Faculty Lead, Co-Faculty, Tower Lead, SME, Lab Technician, Student, Student Intern), and a month grid of person × task × day.
+- Timesheet rules: max 12 h per person per day, no future dates, 7-day backdating limit, nobody approves their own entry.
+- Daily project status (green / amber / red, blockers, next plan).
+- Daily and monthly reports, print / PDF / CSV. HoDs get a department-only report.
+- People management, password reset, audit log, backup / restore.
 
-## Two modes
+## Phase 2 — connect the database (later)
 
-| Mode | When | Data |
-|---|---|---|
-| **Demo** | `VITE_SUPABASE_*` not set (the default live demo) | Seeded placeholder data in the browser's localStorage; pick any role to sign in |
-| **Live** | Supabase URL and anon key set | Shared Postgres database with email/password sign-in, protected by Row Level Security |
+`supabase/schema.sql` contains the full multi-user database: tables, the 7 departments, Row Level Security policies, integrity triggers and audit log (tested with PGlite in `tests/schema.test.ts`). To switch over:
 
-## Supabase (already connected)
+1. Run `supabase/schema.sql` in a Supabase project (SQL Editor).
+2. Add a file `.env.production` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (publishable key — never the service-role key), commit, push.
+3. Set Supabase **Authentication → URL Configuration → Site URL** to the app address.
 
-The production build reads `.env.production`, which holds the project URL and the **publishable** key. Those two values are public by design; every rule that protects the data is in [`supabase/schema.sql`](supabase/schema.sql), which has already been applied to the project (RLS on all 8 tables, 7 departments seeded).
+The app then uses Supabase sign-up/sign-in automatically; no code changes are needed. Existing phase-1 data can be moved over from a backup file (an import script is a planned addition).
 
-One-time steps that still need the Supabase dashboard:
-
-1. **Authentication → URL Configuration** → set *Site URL* to `https://vigneshls.github.io/nscet-ns-spark/` (otherwise email-confirmation links point to localhost).
-2. Sign up on the site, then make yourself admin in **SQL Editor**:
-   ```sql
-   update public.profiles set role = 'admin' where email = 'your-email@nscet.org';
-   ```
-3. Approve everyone else from the app's **Users** page (assign role + department).
-
-Never put the `service_role` / secret key in this repo. Free-plan projects pause after a period of inactivity and have size limits — check Supabase's current pricing before relying on it.
-
-## Local development
+## Development
 
 ```bash
 npm ci
 npm run dev        # http://localhost:5173/nscet-ns-spark/
-npm test           # unit tests + RLS tests (real Postgres via PGlite)
-npm run build      # outputs dist/ (index.html + 404.html)
+npm test           # unit tests + database RLS tests (PGlite)
+npm run build      # dist/
 ```
 
-To run against Supabase locally, copy `.env.example` to `.env.local` and fill in the two values.
+Pushing to `main` builds, tests and deploys to GitHub Pages (`.github/workflows/deploy.yml`).
 
-| Variable | Required | Purpose |
-|---|---|---|
-| `VITE_SUPABASE_URL` | for live mode | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | for live mode | Public anon key (RLS-protected) |
-
-## Stack
-
-- React 19, TypeScript, Vite and Tailwind CSS 4. HashRouter is used so deep links work on GitHub Pages.
-- Supabase: Postgres, Auth and Row Level Security. All permission rules are enforced in [`supabase/schema.sql`](supabase/schema.sql).
-- Vitest and PGlite. The schema tests run the actual SQL and check the RLS rules, for example that a HoD cannot approve their own proposal, that a student cannot self-approve, and that the 12-hour daily cap holds.
-
-## Project structure
+Stack: React 19, TypeScript, Vite, Tailwind CSS 4, HashRouter (GitHub Pages). Optional Supabase backend.
 
 ```
-src/lib/        types, constants, permission rules, reports, actions, data stores (demo + Supabase), demo seed
-src/pages/      Dashboard, Projects, ProjectForm, ProjectDetail, Proposals, Timesheet, Approvals, Reports, Users, Audit
-supabase/       schema.sql (tables, RLS, triggers, audit)
-tests/          logic.test.ts, schema.test.ts, e2e_flow.py (Playwright happy path)
+src/lib/        types, constants, permissions, reports, actions, local store + local accounts, Supabase adapter
+src/pages/      Dashboard, Projects, ProjectForm, ProjectDetail, Proposals, Timesheet, Approvals, Reports, People, Audit, Data
+supabase/       schema.sql for phase 2
+tests/          logic.test.ts, schema.test.ts, e2e_flow.py
 PROMPT.md       full requirements prompt
 ```
 
-## Demo accounts
-
-Demo mode only. All names are placeholders. Sign in from the start screen as NS Spark Coordinator, Principal, HoD – MECH, HoD – AIDS, Faculty MECH-1/2, Student MECH-1, or any other seeded user. Use **Reset demo** in the sidebar to restore the seed data.
-
 ## Data protection
 
-The app stores staff and student names, emails, register numbers and work logs. The measures in place are:
-
-- Access is restricted by role.
-- Timesheets are visible only to their owner, the project staff, the HoD, the admin and management viewers.
-- The public demo contains no real names.
-
-For production, record a purpose and retention period in line with India's DPDP Act 2023. This README does not give legal advice.
+The app holds staff and student names, emails, register numbers and work logs. Access is role-based, and timesheets are visible only to the owner, project staff, the HoD, the admin and management. Keep backup files private (they include password hashes). For production, record purpose and retention in line with India's DPDP Act 2023 (not legal advice).
 
 ## License
 
