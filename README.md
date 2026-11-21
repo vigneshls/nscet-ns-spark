@@ -41,22 +41,20 @@ NS Spark is the single umbrella for innovation projects across the seven departm
 | **Demo** | `VITE_SUPABASE_*` not set (the default live demo) | Seeded placeholder data in the browser's localStorage; pick any role to sign in |
 | **Live** | Supabase URL and anon key set | Shared Postgres database with email/password sign-in, protected by Row Level Security |
 
-## Go live with Supabase (about 15 minutes, free tier)
+## Supabase (already connected)
 
-1. Create a project at [supabase.com](https://supabase.com). Choose the region nearest to you (e.g. Mumbai).
-2. Open **SQL Editor**, paste the whole of [`supabase/schema.sql`](supabase/schema.sql) and run it. This creates the tables, the 7 departments, the RLS policies, the triggers and the audit log.
-3. Go to **Authentication → URL Configuration** and set Site URL to `https://vigneshls.github.io/nscet-ns-spark/`.
-4. Go to **Project Settings → API** and copy the *Project URL* and the *anon public* key.
-5. In GitHub, go to repo **Settings → Secrets and variables → Actions → Variables** and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Then re-run the **Deploy to GitHub Pages** workflow.
-6. Open the site and create your own account. In the SQL Editor, run:
+The production build reads `.env.production`, which holds the project URL and the **publishable** key. Those two values are public by design; every rule that protects the data is in [`supabase/schema.sql`](supabase/schema.sql), which has already been applied to the project (RLS on all 8 tables, 7 departments seeded).
+
+One-time steps that still need the Supabase dashboard:
+
+1. **Authentication → URL Configuration** → set *Site URL* to `https://vigneshls.github.io/nscet-ns-spark/` (otherwise email-confirmation links point to localhost).
+2. Sign up on the site, then make yourself admin in **SQL Editor**:
    ```sql
    update public.profiles set role = 'admin' where email = 'your-email@nscet.org';
    ```
-7. Sign in again. In **Users**, approve each person who signs up and assign their role (HoD, Faculty, Student, Viewer) and department.
+3. Approve everyone else from the app's **Users** page (assign role + department).
 
-The anon key is public by design. It is safe only because RLS is enabled, which `schema.sql` does. Never put the `service_role` key in this repo or in the front end.
-
-**Free-tier limits.** Supabase's free plan pauses a project after a period of inactivity and has database-size and auth-user caps. Check Supabase's current pricing page before relying on it for production. GitHub Pages is free for public repositories.
+Never put the `service_role` / secret key in this repo. Free-plan projects pause after a period of inactivity and have size limits — check Supabase's current pricing before relying on it.
 
 ## Local development
 

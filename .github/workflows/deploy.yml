@@ -21,11 +21,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # Supabase connection comes from .env.production (public URL + publishable key).
       - run: npm run build
-        env:
-          # Optional. Set both as repository Variables to switch from demo mode to Supabase.
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist

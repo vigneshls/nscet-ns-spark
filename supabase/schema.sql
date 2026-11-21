@@ -149,7 +149,7 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 create or replace function public.ist_today() returns date
-language sql stable as $$ select (now() at time zone 'Asia/Kolkata')::date $$;
+language sql stable set search_path = public as $$ select (now() at time zone 'Asia/Kolkata')::date $$;
 
 create or replace function public.can_edit_project(pid uuid) returns boolean
 language sql stable security definer set search_path = public as $$
@@ -174,6 +174,12 @@ create or replace function public.project_status(pid uuid) returns text
 language sql stable security definer set search_path = public as $$
   select status from public.projects where id = pid
 $$;
+
+-- Helpers are used inside RLS policies for signed-in users only; anonymous callers get nothing.
+revoke execute on function public.my_role(), public.my_dept(), public.is_approved(), public.can_edit_project(uuid),
+  public.is_project_staff(uuid), public.is_project_member(uuid), public.project_status(uuid) from public, anon;
+grant execute on function public.my_role(), public.my_dept(), public.is_approved(), public.can_edit_project(uuid),
+  public.is_project_staff(uuid), public.is_project_member(uuid), public.project_status(uuid), public.ist_today() to authenticated;
 
 -- ---------- new sign-ups get a pending profile ----------
 create or replace function public.handle_new_user() returns trigger
